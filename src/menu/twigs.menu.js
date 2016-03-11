@@ -415,11 +415,15 @@ angular.module('twigs.menu')
   .directive('twgMenu', function ($rootScope, $location, $log, Menu, MenuPermissionService, MenuHelper) {
     return {
       restrict: 'E',
-      scope: {},
-      link: function (scope, element, attrs) {
+      scope: {
+          menuName: '@',
+          templateUrl: '@',
+          outerClass: '@class'
+      },
+      link: function (scope) {
 
         function update() {
-          MenuPermissionService.filterMenuForRouteRestrictions(Menu.menu(attrs.menuName)).then(function (filteredMenu) {
+          MenuPermissionService.filterMenuForRouteRestrictions(Menu.menu(scope.menuName)).then(function (filteredMenu) {
             scope.menu = filteredMenu;
             MenuHelper.setActiveMenuEntryRecursively($location.path(), scope.menu);
           });
@@ -442,13 +446,15 @@ angular.module('twigs.menu')
           update();
         });
 
+        scope.getTemplateUrl = function() {
+
+          if (angular.isDefined(scope.templateUrl)) {
+            return scope.templateUrl;
+          } else {
+            return Menu.menu(scope.menuName).templateUrl;
+          }
+        };
       },
-      templateUrl: function (element, attrs) {
-        if (angular.isDefined(attrs.templateUrl)) {
-          return attrs.templateUrl;
-        } else {
-          return Menu.menu(attrs.menuName).templateUrl;
-        }
-      }
+      template: '<ng-include class={{outerClass}} src="getTemplateUrl()" />'
     };
   });
