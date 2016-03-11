@@ -2632,11 +2632,15 @@ angular.module('twigs.menu')
   .directive('twgMenu', ["$rootScope", "$location", "$log", "Menu", "MenuPermissionService", "MenuHelper", function ($rootScope, $location, $log, Menu, MenuPermissionService, MenuHelper) {
     return {
       restrict: 'E',
-      scope: {},
-      link: function (scope, element, attrs) {
+      scope: {
+          menuName: '@',
+          templateUrl: '@',
+          outerClass: '@class'
+      },
+      link: function (scope) {
 
         function update() {
-          MenuPermissionService.filterMenuForRouteRestrictions(Menu.menu(attrs.menuName)).then(function (filteredMenu) {
+          MenuPermissionService.filterMenuForRouteRestrictions(Menu.menu(scope.menuName)).then(function (filteredMenu) {
             scope.menu = filteredMenu;
             MenuHelper.setActiveMenuEntryRecursively($location.path(), scope.menu);
           });
@@ -2659,14 +2663,16 @@ angular.module('twigs.menu')
           update();
         });
 
+        scope.getTemplateUrl = function() {
+
+          if (angular.isDefined(scope.templateUrl)) {
+            return scope.templateUrl;
+          } else {
+            return Menu.menu(scope.menuName).templateUrl;
+          }
+        };
       },
-      templateUrl: function (element, attrs) {
-        if (angular.isDefined(attrs.templateUrl)) {
-          return attrs.templateUrl;
-        } else {
-          return Menu.menu(attrs.menuName).templateUrl;
-        }
-      }
+      template: '<ng-include class={{outerClass}} src="getTemplateUrl()" />'
     };
   }]);
 
@@ -3130,34 +3136,6 @@ angular.module('twigs.protectedRoutes')
 
 'use strict';
 
-angular.module('twigs.security')
-
-  .service('UserObjectSanityChecker', function () {
-
-    var EXPECTED_PROPERTIES = ['username', 'permissions'];
-
-    function isSaneUserObject(userObject) {
-      if (angular.isUndefined(userObject)) {
-        return false;
-      }
-
-      var allPropertiesFound = true;
-      EXPECTED_PROPERTIES.forEach(function (prop) {
-        if (angular.isUndefined(userObject[prop])) {
-          allPropertiesFound = false;
-        }
-      });
-
-      return allPropertiesFound;
-    }
-
-    return {
-      isSane: isSaneUserObject
-    };
-  });
-
-'use strict';
-
 /* twigs
  * Copyright (C) 2014, Hatch Development Team
  *
@@ -3268,10 +3246,38 @@ angular.module('twigs.security')
     };
   }]);
 
-angular.module("twigs.templates", []).run(["$templateCache", function($templateCache) {$templateCache.put("templates/errorModal.html","<div class=\"modal-header\">\n    <button type=\"button\" class=\"close\" x-ng-click=\"$close()\" aria-hidden=\"true\">&times;</button>\n    <h3><i class=\"glyphicon glyphicon-exclamation-sign\"></i>{{title}}</h3>\n</div>\n<div class=\"modal-body\">\n    <p>{{message}}</p>\n</div>\n<div class=\"modal-footer\">\n    <button class=\"btn btn-default\" x-ng-click=\"$close()\">{{primaryButtonText}}</button>\n</div>");
-$templateCache.put("templates/fileModal.html","<div class=\"modal-header\">\n    <h3>{{title}}</h3>\n</div>\n<div class=\"modal-body\">\n    <iframe id=\"modal-fileframe\" x-ng-src=\"{{message}}\"></iframe>\n</div>\n<div class=\"modal-footer\">\n    <button class=\"btn btn-default\" x-ng-click=\"$close()\">{{backButtonText}}</button>\n</div>");
-$templateCache.put("templates/infoModal.html","<div class=\"modal-header\">\n    <button type=\"button\" class=\"close\" x-ng-click=\"$close()\">&times;</button>\n    <h3><i class=\"glyphicon glyphicon-info-sign\"></i>{{title}}</h3>\n</div>\n<div class=\"modal-body\">\n    <p>{{message}}</p>\n</div>\n<div class=\"modal-footer\">\n    <button class=\"btn btn-default\" x-ng-click=\"$close()\">{{primaryButtonText}}</button>\n</div>");
-$templateCache.put("templates/successToast.html","<!-- for success messages, centered on top of browser window (aka \"Toast\")-->\n<div class=\"alert alert-success fade-in\" x-ng-click=\"close()\">\n    <button type=\"button\" class=\"close\" x-ng-click=\"close()\">&times;</button>\n    <div id=\"successMessage\"> <i class=\"pull-left glyphicon glyphicon-check\"></i>\n        <div style=\"margin-left: 25px;\">{{message}}</div>\n    </div>\n</div>\n");
-$templateCache.put("templates/warningModal.html","<div class=\"modal-header\">\n    <button type=\"button\" class=\"close\" x-ng-click=\"$close()\" aria-hidden=\"true\">&times;</button>\n    <h3><i class=\"glyphicon glyphicon-exclamation-sign\"></i>{{title}}</h3>\n</div>\n<div class=\"modal-body\">\n    <p><translate>{{message}}</translate></p>\n</div>\n<div class=\"modal-footer\">\n    <button class=\"btn btn-default\" x-ng-click=\"$close()\">{{primaryButtonText}}</button>\n</div>");
-$templateCache.put("templates/warningToast.html","<!-- for success messages, centered on top of browser window (aka \"Toast\")-->\n<div class=\"alert alert-warning fade-in\" x-ng-click=\"close()\">\n    <button type=\"button\" class=\"close\" x-ng-click=\"close()\">&times;</button>\n    <div id=\"successMessage\"> <i class=\"pull-left glyphicon glyphicon-check\"></i>\n        <div style=\"margin-left: 25px;\">{{message}}</div>\n    </div>\n</div>\n");
-$templateCache.put("templates/yesnoModal.html","<div class=\"modal-header\">\n    <h3>{{title}}</h3>\n</div>\n<div class=\"modal-body\">\n    <p>{{message}}</p>\n</div>\n<div class=\"modal-footer\">\n    <button class=\"btn btn-danger\" x-ng-click=\"$close(false)\">{{primaryButtonText}}</button>\n    <button class=\"btn btn-yes {{message.yesButtonCls}} btn-success\" x-ng-click=\"$close(true)\">{{secondaryButtonText}}</button>\n</div>");}]);
+'use strict';
+
+angular.module('twigs.security')
+
+  .service('UserObjectSanityChecker', function () {
+
+    var EXPECTED_PROPERTIES = ['username', 'permissions'];
+
+    function isSaneUserObject(userObject) {
+      if (angular.isUndefined(userObject)) {
+        return false;
+      }
+
+      var allPropertiesFound = true;
+      EXPECTED_PROPERTIES.forEach(function (prop) {
+        if (angular.isUndefined(userObject[prop])) {
+          allPropertiesFound = false;
+        }
+      });
+
+      return allPropertiesFound;
+    }
+
+    return {
+      isSane: isSaneUserObject
+    };
+  });
+
+angular.module("twigs.templates", []).run(["$templateCache", function($templateCache) {$templateCache.put("templates/errorModal.html","<div class=\"modal-header\">\r\n    <button type=\"button\" class=\"close\" x-ng-click=\"$close()\" aria-hidden=\"true\">&times;</button>\r\n    <h3><i class=\"glyphicon glyphicon-exclamation-sign\"></i>{{title}}</h3>\r\n</div>\r\n<div class=\"modal-body\">\r\n    <p>{{message}}</p>\r\n</div>\r\n<div class=\"modal-footer\">\r\n    <button class=\"btn btn-default\" x-ng-click=\"$close()\">{{primaryButtonText}}</button>\r\n</div>");
+$templateCache.put("templates/fileModal.html","<div class=\"modal-header\">\r\n    <h3>{{title}}</h3>\r\n</div>\r\n<div class=\"modal-body\">\r\n    <iframe id=\"modal-fileframe\" x-ng-src=\"{{message}}\"></iframe>\r\n</div>\r\n<div class=\"modal-footer\">\r\n    <button class=\"btn btn-default\" x-ng-click=\"$close()\">{{backButtonText}}</button>\r\n</div>");
+$templateCache.put("templates/infoModal.html","<div class=\"modal-header\">\r\n    <button type=\"button\" class=\"close\" x-ng-click=\"$close()\">&times;</button>\r\n    <h3><i class=\"glyphicon glyphicon-info-sign\"></i>{{title}}</h3>\r\n</div>\r\n<div class=\"modal-body\">\r\n    <p>{{message}}</p>\r\n</div>\r\n<div class=\"modal-footer\">\r\n    <button class=\"btn btn-default\" x-ng-click=\"$close()\">{{primaryButtonText}}</button>\r\n</div>");
+$templateCache.put("templates/successToast.html","<!-- for success messages, centered on top of browser window (aka \"Toast\")-->\r\n<div class=\"alert alert-success fade-in\" x-ng-click=\"close()\">\r\n    <button type=\"button\" class=\"close\" x-ng-click=\"close()\">&times;</button>\r\n    <div id=\"successMessage\"> <i class=\"pull-left glyphicon glyphicon-check\"></i>\r\n        <div style=\"margin-left: 25px;\">{{message}}</div>\r\n    </div>\r\n</div>\r\n");
+$templateCache.put("templates/warningModal.html","<div class=\"modal-header\">\r\n    <button type=\"button\" class=\"close\" x-ng-click=\"$close()\" aria-hidden=\"true\">&times;</button>\r\n    <h3><i class=\"glyphicon glyphicon-exclamation-sign\"></i>{{title}}</h3>\r\n</div>\r\n<div class=\"modal-body\">\r\n    <p><translate>{{message}}</translate></p>\r\n</div>\r\n<div class=\"modal-footer\">\r\n    <button class=\"btn btn-default\" x-ng-click=\"$close()\">{{primaryButtonText}}</button>\r\n</div>");
+$templateCache.put("templates/warningToast.html","<!-- for success messages, centered on top of browser window (aka \"Toast\")-->\r\n<div class=\"alert alert-warning fade-in\" x-ng-click=\"close()\">\r\n    <button type=\"button\" class=\"close\" x-ng-click=\"close()\">&times;</button>\r\n    <div id=\"successMessage\"> <i class=\"pull-left glyphicon glyphicon-check\"></i>\r\n        <div style=\"margin-left: 25px;\">{{message}}</div>\r\n    </div>\r\n</div>\r\n");
+$templateCache.put("templates/yesnoModal.html","<div class=\"modal-header\">\r\n    <h3>{{title}}</h3>\r\n</div>\r\n<div class=\"modal-body\">\r\n    <p>{{message}}</p>\r\n</div>\r\n<div class=\"modal-footer\">\r\n    <button class=\"btn btn-danger\" x-ng-click=\"$close(false)\">{{primaryButtonText}}</button>\r\n    <button class=\"btn btn-yes {{message.yesButtonCls}} btn-success\" x-ng-click=\"$close(true)\">{{secondaryButtonText}}</button>\r\n</div>");}]);
